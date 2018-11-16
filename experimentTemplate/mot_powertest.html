@@ -1,5 +1,5 @@
 <!-- showing MOT task on an image background -->
-<!-- This page does staircase calibration to select the target velocity, this is not the actual experiment yet.-->
+<!-- This page is meant to compare accuracy levels between precarious conditions and non-precarious conditions at subject threshold, this is not the actual experiment yet.-->
 
 <!DOCTYPE html>
 <html>
@@ -56,7 +56,6 @@ html, body {
 #background_container {
   background: black;
   position: relative;
-  background-image: url("webfile/stable-laptop-1-hd.jpg");  /* "webfile/background_practice.jpg" for a non-laptop background */
   background-repeat: no-repeat;
   background-position: center;
   background-attachment: fixed;
@@ -127,9 +126,9 @@ html, body {
 // ---------------------------------------------------------------------------------------------------
 
 var frame_index = 0;             // where are we in the animation?
-var num_fixation_frames = 5;     // for how many frames to show fixation cross
+var num_fixation_frames = 10;     // for how many frames to show fixation cross
 var num_moving_frames = 100;      // how long should the tracking animation last
-var num_blink_frames = 15;       // how long the blinking animtion lasts
+var num_blink_frames = 30;       // how long the blinking animtion lasts
 var repulsion_radius = 30;       // object orbit
 
 var object_x = [];               // object coordinates
@@ -145,11 +144,8 @@ var object_size = 25;
 
 var num_objects = 8;             // how many objects ?
 var num_targets = 4;             // how many of them are targets ?
-var object_velocity = 2.2;       // how far do the objects move per frame
-var velocity_step = 0.5;         // step used to calibrate object velocity
+var object_velocity = 6;       // set at threshold for participant
 var frameTiming = 32;            // time im milliseconds between frames - set this variable to control the speed of animation
-var num_reversals = 0;           // the number of reversals that we need for staircasing
-var staircase_increasing = 1;     // we are currently in the increasing mode
 
 // ---------------------------------------------------------------------------------------------------
 //
@@ -163,17 +159,50 @@ var clicked_on_num_correct = 0;
 
 // here are various background images we could show
 var backgrounds = [
-  "webfile/precarious_laptop_web.jpg",
-  "webfile/stable_laptop_web.jpg",
-  "webfile/background_practice.jpg",
-  "webfile/background_practice_2.jpg"
+  "webfile/stable-laptop-1-hd.jpg",
+  "webfile/stable-laptop-2-hd.jpg",
+  "webfile/stable-laptop-3-hd.jpg",
+  "webfile/unstable-laptop-1-hd.jpg",
+  "webfile/unstable-laptop-2-hd.jpg",
+  "webfile/unstable-laptop-3-hd.jpg"
 ];
+
+var num_trials_to_show = 30; // make multiples of 6
+var trial_backgrounds = [];
+var trial_type = [];   // stable = 0, unstable = 1 TBD - initialise
+var trial_counter = 0;
+var bkgrd_indicies = [...Array(6).keys()]
+var repetitions = (num_trials_to_show / 6);
+var bkgrd_per_trial = [];
+
+var correct_responses_stable = 0; // TBD: increment us
+var correct_responses_unstable = 0;
 
 // ---------------------------------------------------------------------------------------------------
 //
 //       control functions
 //
 // ---------------------------------------------------------------------------------------------------
+
+Array.prototype.shuffle = function() {
+  var input = this;
+
+  for (var i = input.length-1; i >=0; i--) {
+    var randomIndex = Math.floor(Math.random()*(i+1));
+    var itemAtIndex = input[randomIndex];
+
+    input[randomIndex] = input[i];
+    input[i] = itemAtIndex;
+  }
+
+  return input;
+}
+
+for (var i = 0; i < repetitions; i++) {
+  var bkgrd_indicies = [...Array(6).keys()];
+  var shuffled_indicies = bkgrd_indicies.shuffle(); // psuedorandomizes backgrounds in blocks of 6
+  bkgrd_per_trial = bkgrd_per_trial.concat(shuffled_indicies);
+}
 
 function init_positions() {
   var MOT_width = document.getElementById("task_container").offsetWidth;
@@ -204,7 +233,12 @@ function fixation_cross() {
   document.getElementById("fixationcross").style.top  = `${offy}px`;
 }
 
+/* this is the load window event */
 function load() {
+  var img = bkgrd_per_trial[trial_counter];
+  console.log("img = ", img, backgrounds[img], backgrounds, `url(${backgrounds[img]})`);
+  document.getElementById("background_container").style.backgroundImage = `url(${backgrounds[img]})`;
+
   fixation_cross();
   init_positions();
 
@@ -232,7 +266,16 @@ function targetclicked(event) {
     }
 
     if (clicked_on_num_objects == num_targets) {
-      document.getElementById("message").innerHTML = "Thank you! Press SPACE to try again.";
+      var tid = trial_counter+1;
+      document.getElementById("message").innerHTML = `Thank you! Press SPACE to try again. (${tid} out of ${num_trials_to_show})`;
+
+      if (clicked_on_num_correct == num_targets) {
+        if (bkgrd_per_trial[trial_counter] < 3) {
+          correct_responses_stable++;
+        } else if (bkgrd_per_trial[trial_counter] >= 3) {
+          correct_responses_unstable++;
+        }
+      }
       // TBD: if this was PHP here we would submit the form and the response
     }
   }
@@ -254,54 +297,36 @@ function distractorclicked(event) {
 
 function keypressed(event) {
   if (event.keyCode == 32 && clicked_on_num_objects == num_targets) {
-    // clear object selection and all variables
-    for (var idx = 1; idx <= num_objects; idx++) {
-      var obj = `im${idx}`;
-      document.getElementById(obj).src = "webfile/object.png";
-    }
-
-    waiting_for_response = 0;
-    frame_index = 0;
-    object_x = [];
-    object_y = [];
-    object_angle = [];
-    init_positions();
-    fixation_cross();
-
-    /*
-    TBD: At this point we are ready to start the next trial.
-    Staircase the difficulty of the next trial based on how the subject responded
-    */
-
-    if (num_reversals < 3) {
-      if (clicked_on_num_correct == clicked_on_num_objects) {
-        if (staircase_increasing == 0) {
-          // if we got here this means we have reversed
-          num_reversals++;
-          if (num_reversals < 3) {
-            // the last response was correct, do we want to increase difficulty?
-            object_velocity += 3*velocity_step;
-          }
-
-        } else {
-          object_velocity += 3*velocity_step;
-        }
-
-        staircase_increasing = 1;
-      } else {
-        // the last response was incorrect, decrease difficulty
-        object_velocity -= velocity_step;
-        staircase_increasing = 0;
+    if (trial_counter < num_trials_to_show - 1) {
+      // clear object selection and all variables
+      for (var idx = 1; idx <= num_objects; idx++) {
+        var obj = `im${idx}`;
+        document.getElementById(obj).src = "webfile/object.png";
       }
+
+      waiting_for_response = 0;
+      frame_index = 0;
+      object_x = [];
+      object_y = [];
+      object_angle = [];
+
+      init_positions();
+      fixation_cross();
 
       clicked_on_num_objects = 0;
       clicked_on_num_correct = 0;
+
+      trial_counter++;
+
+      var img = bkgrd_per_trial[trial_counter];
+
+      console.log("img = ", img, backgrounds[img], backgrounds, `url(${backgrounds[img]})`);
+      document.getElementById("background_container").style.backgroundImage = `url(${backgrounds[img]})`;
+
       setTimeout(nextFrame, frameTiming);   // restarting the trial
     } else {
-      alert(`Thanks! Your velocity is: ${object_velocity}`);
+      alert(`Your accuracy for stable: ${correct_responses_stable} Your accuracy for unstable: ${correct_responses_unstable}`); // and for unstable .... TBD
     }
-  } else {
-    // document.getElementById("im1").src = "webfile/sad1.png"; // debugging
   }
 }
 
