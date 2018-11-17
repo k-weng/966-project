@@ -132,13 +132,13 @@ var num_moving_frames = 100;      // how long should the tracking animation last
 var num_blink_frames = 15;       // how long the blinking animtion lasts
 var repulsion_radius = 30;       // object orbit
 
+var object_angle = [];           // object direction of movement
 var object_x = [];               // object coordinates
 var object_y = [];
-var object_angle = [];           // object direction of movement
-var object_v_x = [];
-var object_v_y = [];             // object velocities
-var object_a_x = [];
-var object_a_y = [];             // object accelerations
+var object_v_x = [];             // object velocities
+var object_v_y = [];
+var object_a_x = [];             // object accelerations
+var object_a_y = [];
 var object_size = 25; 
 
 // ---------------------------------------------------------------------------------------------------
@@ -195,6 +195,11 @@ function init_positions() {
     object_x.push(x);
     object_y.push(y);
     object_angle.push(Math.random()*Math.PI*2);
+    var angle = Math.random()*Math.PI*2;
+    object_v_x.push(object_velocity*Math.cos(angle));
+    object_v_y.push(object_velocity*Math.sin(angle));
+    object_a_x.push(0);
+    object_a_y.push(0);
   }
 }
 
@@ -266,9 +271,13 @@ function keypressed(event) {
 
     waiting_for_response = 0;
     frame_index = 0;
+    object_angle = [];
     object_x = [];
     object_y = [];
-    object_angle = [];
+    object_v_x = [];
+    object_v_y = [];
+    object_a_x = [];
+    object_a_y = [];
     init_positions();
     fixation_cross();
 
@@ -368,31 +377,66 @@ function reset_object_positions(num) {
 function animate_objects() {
   for (var i = 0; i < object_x.length; i++) {
    
-     // update position
-     var sign = -1.0;
-     if (Math.random() > 0.5) sign = 1.0;
-   
-     object_angle[i] = object_angle[i]+ Math.random()*Math.PI/90; // introduce noise
-     
-     // slowly rotate until new position is valid
-     var iter = 360;   
-     while (iter > 0 && !check_constraints(object_x[i] + object_velocity*Math.cos(object_angle[i]), 
-                                           object_y[i] + object_velocity*Math.sin(object_angle[i]), i)
-           ) {
-         object_angle[i] = object_angle[i]+sign*Math.PI/180;
-         iter--;
-     }
-     
-     // update new position
-     if (iter > 0) {
-        object_x[i] = object_x[i] + object_velocity*Math.cos(object_angle[i]);
-        object_y[i] = object_y[i] + object_velocity*Math.sin(object_angle[i]);
-     }
+    /*
+    // update position
+    var sign = -1.0;
+    if (Math.random() > 0.5) sign = 1.0;
 
-     // calculate distance to every other object
-     for (var j = 0; j < object_x.length; j++) {
-     	distance(object_x[i], object_y[i], object_x[j], object_y[j])
-     }
+    object_angle[i] = object_angle[i]+ Math.random()*Math.PI/90; // introduce noise
+
+    // slowly rotate until new position is valid
+    var iter = 360;   
+    while (iter > 0 && !check_constraints(object_x[i] + object_velocity*Math.cos(object_angle[i]), 
+                                       object_y[i] + object_velocity*Math.sin(object_angle[i]), i)
+       ) {
+     object_angle[i] = object_angle[i]+sign*Math.PI/180;
+     iter--;
+    }
+
+    // update new position
+    if (iter > 0) {
+    object_x[i] = object_x[i] + object_velocity*Math.cos(object_angle[i]);
+    object_y[i] = object_y[i] + object_velocity*Math.sin(object_angle[i]);
+    }
+    */
+
+    // calculate distance to every other object
+    for (var j = 0; j < object_x.length; j++) {
+      //var dist = distance(object_x[i], object_y[i], object_x[j], object_y[j]);
+      // update accelerations based on force (inversely prop to distance)
+
+      // for some reason inverse doesn't work help
+      //object_a_x[i] -= 100/(object_x[j] - object_x[i]);
+      //object_a_y[i] -= 100/(object_y[j] - object_y[i]);
+      object_a_x[i] -= object_x[j] - object_x[i];
+      object_a_y[i] -= object_y[j] - object_y[i];
+    }
+
+    // update velocity based on acceleration
+    object_v_x[i] += object_a_x[i];
+    object_v_y[i] += object_a_y[i];
+
+    // normalize
+    var current_velocity = distance(object_v_x[i], object_v_y[i], 0, 0);
+    object_v_x[i] *= object_velocity/current_velocity;
+    object_v_y[i] *= object_velocity/current_velocity;
+
+    // adjust angle if imminent collision
+    object_angle[i] = Math.atan(object_v_y[i]/object_v_x[i])
+    var iter = 360;   
+    while (iter > 0 && !check_constraints(object_x[i]+object_v_x[i], object_y[i]+object_v_y[i], i)) {
+      object_angle[i] = object_angle[i] + Math.PI/180;
+      object_v_x[i] = object_velocity*Math.cos(object_angle[i]);
+      object_v_y[i] = object_velocity*Math.sin(object_angle[i]);
+      iter--;
+    }   
+
+    // update new position
+    if (iter > 0) {
+      object_x[i] += object_v_x[i];
+      object_y[i] += object_v_y[i];
+    }
+
   }
 
   init_object_positions(object_x.length);
