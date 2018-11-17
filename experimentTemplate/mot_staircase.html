@@ -416,7 +416,7 @@ function nextFrame() {
 
   } else {
     waiting_for_response = 1;  // no more frames, waiting for response
-    document.getElementById("message").innerHTML = "Now please click on the three target objects."
+    document.getElementById("message").innerHTML = `Now please click on the ${num_targets} target objects.`
     return;
   }
 
