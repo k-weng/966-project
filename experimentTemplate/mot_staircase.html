@@ -137,6 +137,10 @@ var repulsion_radius = 30;       // object orbit
 var object_x = [];               // object coordinates
 var object_y = []; 
 var object_angle = [];           // object direction of movement
+var object_v_x = [];
+var object_v_y = [];             // object velocities
+var object_a_x = [];
+var object_a_y = [];             // object accelerations
 var object_size = 25; 
  
 // ---------------------------------------------------------------------------------------------------
@@ -385,6 +389,7 @@ function animate_objects() {
    
      object_angle[i] = object_angle[i]+ Math.random()*Math.PI/90; // introduce noise
      
+     // slowly rotate until new position is valid
      var iter = 360;   
      while (iter > 0 && !check_constraints(object_x[i] + object_velocity*Math.cos(object_angle[i]), 
                                            object_y[i] + object_velocity*Math.sin(object_angle[i]), i)
@@ -393,9 +398,15 @@ function animate_objects() {
          iter--;
      }
      
+     // update new position
      if (iter > 0) {
         object_x[i] = object_x[i] + object_velocity*Math.cos(object_angle[i]);
         object_y[i] = object_y[i] + object_velocity*Math.sin(object_angle[i]);
+     }
+
+     // calculate distance to every other object
+     for (var j = 0; j < object_x.length; j++) {
+     	distance(object_x[i], object_y[i], object_x[j], object_y[j])
      }
   }
  
