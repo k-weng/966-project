@@ -7,13 +7,13 @@
 <meta charset="UTF-8">
 <title>Instructions</title>
 <style>
- 
+
 html, body {
- margin: 0; 
- height: 100%; 
- overflow: hidden
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
 }
- 
+
 #object1 { position: absolute; top: -500px; left: -500px; }
 #object2 { position: absolute; top: -500px; left: -500px; }
 #object3 { position: absolute; top: -500px; left: -500px; }
@@ -22,413 +22,382 @@ html, body {
 #object6 { position: absolute; top: -500px; left: -500px; }
 #object7 { position: absolute; top: -500px; left: -500px; }
 #object8 { position: absolute; top: -500px; left: -500px; }
- 
+
 #fixationcross { position: absolute; top: -500px; left: -500px; }
- 
-#task_container { 
- position: relative;
- text-align: center; 
- font-size: 110%; 
- width: 410px; 
- height: 240px; 
- top: 80px;
- left: 520px;                    /* left will be 510 for the unstable laptop */ 
- background: black;              /* btw, this is how you write comments in CSS */
+
+#task_container {
+  position: absolute;
+  text-align: center;
+  background: black;
+  font-size: 110%;
+  width: 410px;
+  height: 240px;
+  bottom: 50%;
+  margin-bottom: -20px;
+  margin-left: -220px;
+  left: 50%;
 }
- 
-#page_container { 
- align:center; 
- width: 100%;
- height: 100%;
+
+#page_container {
+  width: 100%;
+  height: 100%;
 }
- 
-#message { 
- align:center; 
- font-size: 120%; 
- text-align: center; 
- color: #00aaff;
+
+#message {
+  font-size: 120%;
+  text-align: center;
+  color: #00aaff;
 }
- 
-#background_container { 
- background: black;
- position: relative;
- background-image: url("webfile/stable_laptop_web.jpg");  /* "webfile/background_practice.jpg" for a non-laptop background */
- background-repeat: no-repeat;
- background-position: center;
- text-align:center; 
- align:center; 
- font-size: 120%; 
- color: #00aaff; 
- width: 100%; 
- height: 761px;
+
+#background_container {
+  background: black;
+  position: relative;
+  background-image: url("webfile/stable-laptop-1-hd.jpg");  /* "webfile/background_practice.jpg" for a non-laptop background */
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+  text-align:center;
+  font-size: 120%;
+  color: #00aaff;
+  height: 100%;
+  background-size: 1450px;
 }
- 
+
 </style>
 </head>
- 
+
 <body onload="load()" onkeydown="keypressed(event)">
 
-<div id = "page_container"> 
+<div id = "page_container">
   <div id="background_container">
-  
     <br><br>
     <div id="message">
       Please look at the fixation cross.
     </div>
     <br><br>
-   
-    <div id="task_container">
-       <!-- the area in which the MOT is dislayed -->
-    </div>
-   
-    <div id="fixationcross"><img src="webfile/fixation.png" width = "18px" /></div> 
-   
-    <!-- MOT Objects are added dynamically, so there will be some entries of this kind -->
-    <!-- <div id='object1'><img id='im1' src='webfile/object.png' width = '20px' onclick='targetclicked(event)'/></div> -->
- </div>
-  
- <br>
 
- <!--
- <form name="frm" action="experiment.php" method="post" onsubmit="return validateForm()">
-   <input type="text" name="UID" hidden>
-   <input type="text" name="firsttrial" hidden><input type="submit" value="Continue" hidden/>
- </form>
+    <div id="task_container">
+      <!-- the area in which the MOT is dislayed -->
+      <!-- MOT Objects are added dynamically, so there will be some entries of this kind -->
+      <!-- <div id='object1'><img id='im1' src='webfile/object.png' width = '20px' onclick='targetclicked(event)'/></div> -->
+    </div>
+
+    <div id="fixationcross">
+      <img src="webfile/fixation.png" width="18px"/>
+    </div>
+  </div>
+  <br>
+
+  <!--
+  <form name="frm" action="experiment.php" method="post" onsubmit="return validateForm()">
+    <input type="text" name="UID" hidden>
+    <input type="text" name="firsttrial" hidden><input type="submit" value="Continue" hidden/>
+  </form>
   -->
-  
-<div>
+</div>
 </body>
 
 <script>
 
 // ---------------------------------------------------------------------------------------------------
 //
-//       variables for animation control 
+//       variables for animation control
 //
-// --------------------------------------------------------------------------------------------------- 
+// ---------------------------------------------------------------------------------------------------
 
 var frame_index = 0;             // where are we in the animation?
-var num_fixation_frames = 5;     // for how many frames to show fixation cross 
+var num_fixation_frames = 5;     // for how many frames to show fixation cross
 var num_moving_frames = 75;      // how long should the tracking animation last
 var num_blink_frames = 10;       // how long the blinking animtion lasts
-var repulsion_radius = 30;       // object orbit 
- 
+var repulsion_radius = 30;       // object orbit
+
 var object_x = [];               // object coordinates
-var object_y = []; 
+var object_y = [];
 var object_angle = [];           // object direction of movement
-var object_size = 25; 
- 
+var object_size = 25;
+
 // ---------------------------------------------------------------------------------------------------
 //
-//      task difficulty  
+//      task difficulty
 //
-// --------------------------------------------------------------------------------------------------- 
- 
+// ---------------------------------------------------------------------------------------------------
+
 var num_objects = 8;             // how many objects ?
 var num_targets = 3;             // how many of them are targets ?
 var object_velocity = 2.5;       // how far do the objects move per frame
-var velocity_step = 0.2;         // step used to calibrate object velocity 
-var frameTiming = 50;            // time im milliseconds between frames - set this variable to control the speed of animation 
-var num_reversals = 0;           // the number of reversals that we need for staircasing 
-var staircse_increasing = 1;     // we are currently in the increasing mode
- 
+var velocity_step = 0.2;         // step used to calibrate object velocity
+var frameTiming = 50;            // time im milliseconds between frames - set this variable to control the speed of animation
+var num_reversals = 0;           // the number of reversals that we need for staircasing
+var staircase_increasing = 1;     // we are currently in the increasing mode
+
 // ---------------------------------------------------------------------------------------------------
 //
-//      interface control 
+//      interface control
 //
-// --------------------------------------------------------------------------------------------------- 
+// ---------------------------------------------------------------------------------------------------
 
-var waiting_for_response = 0;    // 1 if the trial finished and the subject has to click on the objects 
-var clicked_on_num_objects = 0; // make sure that the subject can only select as many objects as there were targets 
-var clicked_on_num_correct = 0; 
- 
-// here are various background images we could show 
-var backgrounds = ["webfile/precarious_laptop_web.jpg", "webfile/stable_laptop_web.jpg",
-                   "webfile/background_practice.jpg", "webfile/background_practice_2.jpg"];
- 
+var waiting_for_response = 0;    // 1 if the trial finished and the subject has to click on the objects
+var clicked_on_num_objects = 0; // make sure that the subject can only select as many objects as there were targets
+var clicked_on_num_correct = 0;
+
+// here are various background images we could show
+var backgrounds = [
+  "webfile/precarious_laptop_web.jpg",
+  "webfile/stable_laptop_web.jpg",
+  "webfile/background_practice.jpg",
+  "webfile/background_practice_2.jpg"
+];
 
 // ---------------------------------------------------------------------------------------------------
 //
 //       control functions
 //
-// --------------------------------------------------------------------------------------------------- 
-
+// ---------------------------------------------------------------------------------------------------
 
 function init_positions() {
-     var MOT_width = document.getElementById("task_container").offsetWidth;
-     var MOT_height = document.getElementById("task_container").offsetHeight;
+  var MOT_width = document.getElementById("task_container").offsetWidth;
+  var MOT_height = document.getElementById("task_container").offsetHeight;
 
-     for (var i = 0; i < num_objects; i++) {
-        
-        var x = Math.random()*(MOT_width -repulsion_radius*2) + repulsion_radius;
-        var y = Math.random()*(MOT_height-repulsion_radius*2) + repulsion_radius;
-      
-        while (!check_constraints(x,y, num_objects)) {
-          x = Math.random()*(MOT_width -repulsion_radius*2) + repulsion_radius;
-          y = Math.random()*(MOT_height-repulsion_radius*2) + repulsion_radius;
-        }
-      
-        object_x.push( x );
-        object_y.push( y ); 
-        object_angle.push(Math.random()*Math.PI*2);
-     }
-}
- 
-function fixation_cross() {
-     // show fixation cross  
-     var MOT_width = document.getElementById("task_container").offsetWidth;
-     var MOT_height = document.getElementById("task_container").offsetHeight;
-     var offx = document.getElementById("task_container").offsetLeft + MOT_width/2;
-     var offy = document.getElementById("task_container").offsetTop + MOT_height/2;
-     document.getElementById("fixationcross").style.left = offx +"px";
-     document.getElementById("fixationcross").style.top  = offy +"px";
-}
- 
-function load() {
-  
-    fixation_cross(); 
-    init_positions();
- 
-    var h = document.getElementById("background_container").innerHTML;    // adding objects
- 
-    for (i = 0; i < num_objects; i++) {    
-        
-        var idx = i+1; 
-        var clickfun = "targetclicked";
-        if (i > num_targets-1) clickfun = "distractorclicked";
-         
-        h = h + "<div id='object" + idx + 
-                "'><img id = 'im" + idx + "' src='webfile/object.png' width = '" + 
-                object_size + "px' onclick='" + clickfun + 
-                "(event)'/></div>"; 
+  for (var i = 0; i < num_objects; i++) {
+    var x = Math.random()*(MOT_width -repulsion_radius*2) + repulsion_radius;
+    var y = Math.random()*(MOT_height-repulsion_radius*2) + repulsion_radius;
+
+    while (!check_constraints(x, y, num_objects)) {
+      x = Math.random()*(MOT_width -repulsion_radius*2) + repulsion_radius;
+      y = Math.random()*(MOT_height-repulsion_radius*2) + repulsion_radius;
     }
-     
-    document.getElementById("background_container").innerHTML = h;  
-    setTimeout(nextFrame, frameTiming); 
+
+    object_x.push(x);
+    object_y.push(y);
+    object_angle.push(Math.random()*Math.PI*2);
+  }
+}
+
+function fixation_cross() {
+  // show fixation cross
+  var MOT_width = document.getElementById("task_container").offsetWidth;
+  var MOT_height = document.getElementById("task_container").offsetHeight;
+  var offx = document.getElementById("task_container").offsetLeft + MOT_width/2;
+  var offy = document.getElementById("task_container").offsetTop + MOT_height/2;
+  document.getElementById("fixationcross").style.left = `${offx}px`;
+  document.getElementById("fixationcross").style.top  = `${offy}px`;
+}
+
+function load() {
+  fixation_cross();
+  init_positions();
+
+  // adding objects
+  var h = document.getElementById("task_container").innerHTML;
+
+  for (var idx = 1; idx <= num_objects; idx++) {
+    var clickfun = "targetclicked";
+    if (idx > num_targets) clickfun = "distractorclicked";
+
+    h += `<div id='object${idx}'><img id='im${idx}' src='webfile/object.png' ` +
+         `width=${object_size}px onclick='${clickfun}(event)'/></div>`;
+  }
+
+  document.getElementById("task_container").innerHTML = h;
+  setTimeout(nextFrame, frameTiming);
 }
 
 function targetclicked(event) {
-    if (waiting_for_response == 1) {
-      if (clicked_on_num_objects < num_targets) {
-        event.target.src = "webfile/happy.png";
-        clicked_on_num_objects++;
-        clicked_on_num_correct++;
-      } 
- 
-      if (clicked_on_num_objects == num_targets) {
-        document.getElementById("message").innerHTML = "Thank you! Press SPACE to try again.";
-        
-        // TBD: if this was PHP here we would submit the form and the response 
-      }
+  if (waiting_for_response == 1) {
+    if (clicked_on_num_objects < num_targets) {
+      event.target.src = "webfile/happy.png";
+      clicked_on_num_objects++;
+      clicked_on_num_correct++;
     }
-}
- 
-function distractorclicked(event) {
-   if (waiting_for_response == 1) {
-      if (clicked_on_num_objects < num_targets) {
-        event.target.src = "webfile/sad.png";
-        clicked_on_num_objects++;
-      } 
- 
-      if (clicked_on_num_objects == num_targets) {
-        document.getElementById("message").innerHTML = "Thank you! Press SPACE to try again.";
-        
-        // TBD: if this was PHP here we would submit the form and the response 
-      }
-   }
-}  
-  
-  
-function keypressed(event) {
- 
-  if (event.keyCode == 32 && clicked_on_num_objects == num_targets) {
-     
-     for (var i = 0; i < num_objects; i++) {                            // clear object selection and all variables
-       var idx =  i+1;
-       var obj = "im" + idx;
-       document.getElementById(obj).src = "webfile/object.png"; 
-     }
-   
-     waiting_for_response = 0;   
-     frame_index = 0; 
-     object_x = [];
-     object_y = [];
-     object_angle = []; 
-     init_positions();
-     fixation_cross(); 
-   
-     /*
-     TBD: At this point we are ready to start the next trial. 
-     Staircase the difficulty of the next trial based on how the subject responded 
-     */
-     
-     if (num_reversals < 4) {
-       if (clicked_on_num_correct == clicked_on_num_objects) {
-          
-          // the last response was correct, do we want to increase difficulty?
-          object_velocity = object_velocity + 3*velocity_step;
-        
-          if (staircse_increasing == 0) {
-            // if we got here this means we have reversed
-            num_reversals++;
-          }
-        
-          staircse_increasing = 1;
-        
-       } else {
-          // the last response was incorrect, decrease difficulty
-          object_velocity = object_velocity - velocity_step;
-          staircse_increasing = 0;
-       }
-   
-       clicked_on_num_objects = 0; 
-       clicked_on_num_correct = 0;
-       setTimeout(nextFrame, frameTiming);   // restarting the trial
-   
-    } else {
-       alert("Thanks! Your velocity is: " + object_velocity );
+
+    if (clicked_on_num_objects == num_targets) {
+      document.getElementById("message").innerHTML = "Thank you! Press SPACE to try again.";
+      // TBD: if this was PHP here we would submit the form and the response
     }
-   
-                                      
-  } else {
-    //document.getElementById("im1").src = "webfile/sad.png"; // debugging
   }
 }
- 
- 
-function validateForm() {
-    document.forms["frm"]["UID"].value = u_id;
-    document.forms["frm"]["firsttrial"].value = "true";
-    return true;  
+
+function distractorclicked(event) {
+  if (waiting_for_response == 1) {
+    if (clicked_on_num_objects < num_targets) {
+      event.target.src = "webfile/sad.png";
+      clicked_on_num_objects++;
+    }
+
+    if (clicked_on_num_objects == num_targets) {
+      document.getElementById("message").innerHTML = "Thank you! Press SPACE to try again.";
+      // TBD: if this was PHP here we would submit the form and the response
+    }
+  }
 }
-    
- 
-// ------------------------------------------------------------------------ 
-//  
+
+function keypressed(event) {
+  if (event.keyCode == 32 && clicked_on_num_objects == num_targets) {
+    // clear object selection and all variables
+    for (var idx = 1; idx <= num_objects; idx++) {
+      var obj = `im${idx}`;
+      document.getElementById(obj).src = "webfile/object.png";
+    }
+
+    waiting_for_response = 0;
+    frame_index = 0;
+    object_x = [];
+    object_y = [];
+    object_angle = [];
+    init_positions();
+    fixation_cross();
+
+    /*
+    TBD: At this point we are ready to start the next trial.
+    Staircase the difficulty of the next trial based on how the subject responded
+    */
+
+    if (num_reversals < 4) {
+      if (clicked_on_num_correct == clicked_on_num_objects) {
+        // the last response was correct, do we want to increase difficulty?
+        object_velocity += 3*velocity_step;
+
+        if (staircase_increasing == 0) {
+          // if we got here this means we have reversed
+          num_reversals++;
+        }
+
+        staircase_increasing = 1;
+      } else {
+        // the last response was incorrect, decrease difficulty
+        object_velocity -= velocity_step;
+        staircase_increasing = 0;
+      }
+
+      clicked_on_num_objects = 0;
+      clicked_on_num_correct = 0;
+      setTimeout(nextFrame, frameTiming);   // restarting the trial
+    } else {
+      alert(`Thanks! Your velocity is: ${object_velocity}`);
+    }
+  } else {
+    // document.getElementById("im1").src = "webfile/sad.png"; // debugging
+  }
+}
+
+function validateForm() {
+  document.forms["frm"]["UID"].value = u_id;
+  document.forms["frm"]["firsttrial"].value = "true";
+  return true;
+}
+
+// ------------------------------------------------------------------------
+//
 //      animation functions
 //
 // ------------------------------------------------------------------------
- 
+
 function distance(x1, y1, x2, y2) {
   var dist = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
   return Math.sqrt(dist);
 }
- 
-function check_constraints(x, y, idx) { 
- 
-   var MOT_width = document.getElementById("task_container").offsetWidth;
-   var MOT_height = document.getElementById("task_container").offsetHeight;
- 
-   for (i = 0; i < object_x.length; i++) {
-    
-     if (idx == i) continue; // do not check distance from self, obviousely
-    
-     if ( distance( x, y, object_x[i], object_y[i]) < object_size/2 + repulsion_radius) {
-      return false;
-     }
-    
-     if (  x < object_size/2 + repulsion_radius || y < object_size/2 + repulsion_radius ) {
-      return false;
-     }
-    
-     if (  x + object_size/2 > MOT_width - repulsion_radius || y + object_size/2 > MOT_height - repulsion_radius ) {
-      return false;
-     }
-    
-   }
-   return true;
-}
-  
-function init_object_positions(num) {
-    var offx = document.getElementById("task_container").offsetLeft;
-    var offy = document.getElementById("task_container").offsetTop;
-  
-    for (i = 0; i < num; i++) {
-       var idx =  i+1;
-       var obj = "object" + idx;
-       document.getElementById(obj).style.left = offx + object_x[i]+"px";
-       document.getElementById(obj).style.top = offy + object_y[i]+"px";
-    }
-}
-                                
-function reset_object_positions(num) {
-    for (var i = 0; i < num; i++) {
-       var idx =  i+1;
-       var obj = "object" + idx;
-       document.getElementById(obj).style.left = "-500px";
-       document.getElementById(obj).style.top = "-500px";
-    }
-}                                
-  
-function animate_objects() {
-  
+
+function check_constraints(x, y, idx) {
+  var MOT_width = document.getElementById("task_container").offsetWidth;
+  var MOT_height = document.getElementById("task_container").offsetHeight;
+
   for (var i = 0; i < object_x.length; i++) {
-   
-     // update position
-     var sign = -1.0;
-     if (Math.random() > 0.5) sign = 1.0;
-   
-     object_angle[i] = object_angle[i]+ Math.random()*Math.PI/90; // introduce noise
-     
-     var iter = 360;   
-     while (iter > 0 && !check_constraints(object_x[i] + object_velocity*Math.cos(object_angle[i]), 
-                                           object_y[i] + object_velocity*Math.sin(object_angle[i]), i)
-           ) {
-         object_angle[i] = object_angle[i]+sign*Math.PI/180;
-         iter--;
-     }
-     
-     if (iter > 0) {
-        object_x[i] = object_x[i] + object_velocity*Math.cos(object_angle[i]);
-        object_y[i] = object_y[i] + object_velocity*Math.sin(object_angle[i]);
-     }
+    if (idx == i) continue; // do not check distance from self, obviousely
+
+    if (distance(x, y, object_x[i], object_y[i]) < object_size/2 + repulsion_radius) {
+      return false;
+    }
+
+    if (x < object_size/2 + repulsion_radius || y < object_size/2 + repulsion_radius) {
+      return false;
+    }
+
+    if (x + object_size/2 > MOT_width - repulsion_radius || y + object_size/2 > MOT_height - repulsion_radius) {
+      return false;
+    }
   }
- 
+
+  return true;
+}
+
+function init_object_positions(num) {
+  for (var i = 0; i < num; i++) {
+    var obj = `object${i + 1}`;
+    document.getElementById(obj).style.left = `${object_x[i]}px`;
+    document.getElementById(obj).style.top = `${object_y[i]}px`;
+  }
+}
+
+function reset_object_positions(num) {
+  for (var i = 0; i < num; i++) {
+    var obj = `object${i + 1}`;
+    document.getElementById(obj).style.left = "-500px";
+    document.getElementById(obj).style.top = "-500px";
+  }
+}
+
+function animate_objects() {
+  for (var i = 0; i < object_x.length; i++) {
+    // update position
+    var sign = -1.0;
+    if (Math.random() > 0.5) sign = 1.0;
+
+    object_angle[i] += Math.random()*Math.PI/90; // introduce noise
+
+    var iter = 360;
+    while (iter > 0 &&
+           !check_constraints(object_x[i] + object_velocity*Math.cos(object_angle[i]),
+                              object_y[i] + object_velocity*Math.sin(object_angle[i]), i)
+    ) {
+      object_angle[i] += sign*Math.PI/180;
+      iter--;
+    }
+
+    if (iter > 0) {
+      object_x[i] += object_velocity*Math.cos(object_angle[i]);
+      object_y[i] += object_velocity*Math.sin(object_angle[i]);
+    }
+  }
+
   init_object_positions(object_x.length);
 }
- 
-function nextFrame() {
 
+function nextFrame() {
   if (frame_index < num_fixation_frames) {
-     // fixation cross
-      
+    // fixation cross
   } else if (frame_index == num_fixation_frames) {
-    
-    // remove fixation cross   
+    // remove fixation cross
     document.getElementById("fixationcross").style.left = "-500px";
     document.getElementById("fixationcross").style.top = "-500px";
-      
-    // initialise object positions 
+
+    // initialise object positions
     init_object_positions(object_x.length);
     document.getElementById("message").innerHTML = "The blinking objects are targets."
-   
+
   } else if (frame_index < num_fixation_frames + num_blink_frames) {
-   
     // draw blinking of the target objects
-    if ( frame_index % 2 == 0 ) {
-       reset_object_positions(num_targets);  
+    if (frame_index % 2 == 0) {
+      reset_object_positions(num_targets);
     } else {
-       init_object_positions(num_targets);
+      init_object_positions(num_targets);
     }
-     
+
   } else if (frame_index == num_fixation_frames + num_blink_frames) {
     init_object_positions(object_x.length);
   } else if (frame_index < num_fixation_frames + num_blink_frames + num_moving_frames) {
-   
     // draw moving animation
     animate_objects();
-   
     document.getElementById("message").innerHTML = "Your task is to keep track of the targets."
-   
+
   } else {
-   waiting_for_response = 1;  // no more frames, waiting for response
-   document.getElementById("message").innerHTML = "Now please click on the three target objects."
-   return;
+    waiting_for_response = 1;  // no more frames, waiting for response
+    document.getElementById("message").innerHTML = `Now please click on the ${num_targets} target objects.`
+    return;
   }
-   
-   frame_index++;  
-   setTimeout(nextFrame, frameTiming);  
+
+  frame_index++;
+  setTimeout(nextFrame, frameTiming);
 }
- 
+
 </script>
 </html>
