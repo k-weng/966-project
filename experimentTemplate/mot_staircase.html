@@ -186,20 +186,20 @@ function init_positions() {
   var MOT_height = document.getElementById("task_container").offsetHeight;
 
   for (var i = 0; i < num_objects; i++) {
-    var x = Math.random()*(MOT_width -repulsion_radius*2) + repulsion_radius;
-    var y = Math.random()*(MOT_height-repulsion_radius*2) + repulsion_radius;
+    var x = Math.random()*(MOT_width -repulsion_radius*2 - object_size) + repulsion_radius + object_size/2;
+    var y = Math.random()*(MOT_height-repulsion_radius*2 - object_size) + repulsion_radius + object_size/2;
 
-    var tx = Math.random()*(MOT_width -repulsion_radius*2) + repulsion_radius;
-    var ty = Math.random()*(MOT_height-repulsion_radius*2) + repulsion_radius;
+    var tx = Math.random()*(MOT_width -repulsion_radius*2 - object_size) + repulsion_radius + object_size/2;
+    var ty = Math.random()*(MOT_height-repulsion_radius*2 - object_size) + repulsion_radius + object_size/2;
 
     while (!check_constraints(x, y, num_objects)) {
-      x = Math.random()*(MOT_width -repulsion_radius*2) + repulsion_radius;
-      y = Math.random()*(MOT_height-repulsion_radius*2) + repulsion_radius;
+      x = Math.random()*(MOT_width -repulsion_radius*2 - object_size) + repulsion_radius + object_size/2;
+      y = Math.random()*(MOT_height-repulsion_radius*2 - object_size) + repulsion_radius + object_size/2;
     }
 
     while (!check_constraints(tx, ty, num_objects)) {
-      tx = Math.random()*(MOT_width -repulsion_radius*2) + repulsion_radius;
-      ty = Math.random()*(MOT_height-repulsion_radius*2) + repulsion_radius;
+      tx = Math.random()*(MOT_width -repulsion_radius*2 - object_size) + repulsion_radius + object_size/2;
+      ty = Math.random()*(MOT_height-repulsion_radius*2 - object_size) + repulsion_radius + object_size/2;
     }
 
     object_x.push(x);
@@ -388,70 +388,74 @@ function reset_object_positions(num) {
 }
 
 function animate_objects() {
-  // for (var i = 0; i < object_x.length; i++) {
+  /*
+  for (var i = 0; i < object_x.length; i++) {
+    // update position
+    var sign = -1.0;
+    if (Math.random() > 0.5) sign = 1.0;
 
-  //   /*
-  //   // update position
-  //   var sign = -1.0;
-  //   if (Math.random() > 0.5) sign = 1.0;
+    object_angle[i] = object_angle[i]+ Math.random()*Math.PI/90; // introduce noise
 
-  //   object_angle[i] = object_angle[i]+ Math.random()*Math.PI/90; // introduce noise
+    // slowly rotate until new position is valid
+    var iter = 360;
+    while (iter > 0 && !check_constraints(object_x[i] + object_velocity*Math.cos(object_angle[i]),
+                                       object_y[i] + object_velocity*Math.sin(object_angle[i]), i)
+       ) {
+     object_angle[i] = object_angle[i]+sign*Math.PI/180;
+     iter--;
+    }
 
-  //   // slowly rotate until new position is valid
-  //   var iter = 360;
-  //   while (iter > 0 && !check_constraints(object_x[i] + object_velocity*Math.cos(object_angle[i]),
-  //                                      object_y[i] + object_velocity*Math.sin(object_angle[i]), i)
-  //      ) {
-  //    object_angle[i] = object_angle[i]+sign*Math.PI/180;
-  //    iter--;
-  //   }
+    // update new position
+    if (iter > 0) {
+    object_x[i] = object_x[i] + object_velocity*Math.cos(object_angle[i]);
+    object_y[i] = object_y[i] + object_velocity*Math.sin(object_angle[i]);
+    }
+  }
+  */
 
-  //   // update new position
-  //   if (iter > 0) {
-  //   object_x[i] = object_x[i] + object_velocity*Math.cos(object_angle[i]);
-  //   object_y[i] = object_y[i] + object_velocity*Math.sin(object_angle[i]);
-  //   }
-  //   */
+  /*
+  for (var i = 0; i < object_x.length; i++) {
+    // calculate distance to every other object
+    for (var j = 0; j < object_x.length; j++) {
+      //var dist = distance(object_x[i], object_y[i], object_x[j], object_y[j]);
+      // update accelerations based on force (inversely prop to distance)
 
-  //   // calculate distance to every other object
-  //   for (var j = 0; j < object_x.length; j++) {
-  //     //var dist = distance(object_x[i], object_y[i], object_x[j], object_y[j]);
-  //     // update accelerations based on force (inversely prop to distance)
+      // for some reason inverse doesn't work help
+      //object_a_x[i] -= 100/(object_x[j] - object_x[i]);
+      //object_a_y[i] -= 100/(object_y[j] - object_y[i]);
+      object_a_x[i] -= object_x[j] - object_x[i];
+      object_a_y[i] -= object_y[j] - object_y[i];
+    }
 
-  //     // for some reason inverse doesn't work help
-  //     //object_a_x[i] -= 100/(object_x[j] - object_x[i]);
-  //     //object_a_y[i] -= 100/(object_y[j] - object_y[i]);
-  //     object_a_x[i] -= object_x[j] - object_x[i];
-  //     object_a_y[i] -= object_y[j] - object_y[i];
-  //   }
+    // update velocity based on acceleration
+    object_v_x[i] += object_a_x[i];
+    object_v_y[i] += object_a_y[i];
 
-  //   // update velocity based on acceleration
-  //   object_v_x[i] += object_a_x[i];
-  //   object_v_y[i] += object_a_y[i];
+    // normalize
+    var current_velocity = distance(object_v_x[i], object_v_y[i], 0, 0);
+    object_v_x[i] *= object_velocity/current_velocity;
+    object_v_y[i] *= object_velocity/current_velocity;
 
-  //   // normalize
-  //   var current_velocity = distance(object_v_x[i], object_v_y[i], 0, 0);
-  //   object_v_x[i] *= object_velocity/current_velocity;
-  //   object_v_y[i] *= object_velocity/current_velocity;
+    // adjust angle if imminent collision
+    object_angle[i] = Math.atan(object_v_y[i]/object_v_x[i])
+    var iter = 360;
+    while (iter > 0 && !check_constraints(object_x[i]+object_v_x[i], object_y[i]+object_v_y[i], i)) {
+      object_angle[i] = object_angle[i] + Math.PI/180;
+      object_v_x[i] = object_velocity*Math.cos(object_angle[i]);
+      object_v_y[i] = object_velocity*Math.sin(object_angle[i]);
+      iter--;
+    }
 
-  //   // adjust angle if imminent collision
-  //   object_angle[i] = Math.atan(object_v_y[i]/object_v_x[i])
-  //   var iter = 360;
-  //   while (iter > 0 && !check_constraints(object_x[i]+object_v_x[i], object_y[i]+object_v_y[i], i)) {
-  //     object_angle[i] = object_angle[i] + Math.PI/180;
-  //     object_v_x[i] = object_velocity*Math.cos(object_angle[i]);
-  //     object_v_y[i] = object_velocity*Math.sin(object_angle[i]);
-  //     iter--;
-  //   }
+    // update new position
+    if (iter > 0) {
+      object_x[i] += object_v_x[i];
+      object_y[i] += object_v_y[i];
+    }
 
-  //   // update new position
-  //   if (iter > 0) {
-  //     object_x[i] += object_v_x[i];
-  //     object_y[i] += object_v_y[i];
-  //   }
+  }
+  */
 
-  // }
-  // console.log(object_x, object_tx, object_y, object_ty)
+  //console.log(object_x, object_tx, object_y, object_ty)g
   for (var i = 0; i < object_x.length; i++) {
     var x = object_x[i];
     var y = object_y[i];
@@ -490,8 +494,8 @@ function animate_objects() {
     var MOT_height = document.getElementById("task_container").offsetHeight;
 
     if (Math.hypot(x - tx, y - ty) < 10) {
-      object_tx[i] = Math.random()*(MOT_width -repulsion_radius*2) + repulsion_radius;
-      object_ty[i] = Math.random()*(MOT_height -repulsion_radius*2) + repulsion_radius;
+      object_tx[i] = Math.random()*(MOT_width - repulsion_radius*2 - object_size) + repulsion_radius + object_size/2;
+      object_ty[i] = Math.random()*(MOT_height - repulsion_radius*2 - object_size) + repulsion_radius + object_size/2;
     }
   }
 
