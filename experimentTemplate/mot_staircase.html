@@ -137,8 +137,7 @@ var object_x = [];               // object coordinates
 var object_y = [];
 var object_v = [];
 var object_size = 25;
-// var force_factor = 2;
-var wall_multiplier = 10;
+var force_factor = 1;
 
 // ---------------------------------------------------------------------------------------------------
 //
@@ -148,7 +147,7 @@ var wall_multiplier = 10;
 
 var num_objects = 8;             // how many objects ?
 var num_targets = 4;             // how many of them are targets ?
-var object_velocity = 2.2;       // how far do the objects move per frame
+var object_velocity = 1;       // how far do the objects move per frame
 var velocity_step = 0.5;         // step used to calibrate object velocity
 var frameTiming = 32;            // time im milliseconds between frames - set this variable to control the speed of animation
 var num_reversals = 0;           // the number of reversals that we need for staircasing
@@ -379,7 +378,6 @@ function animate_objects() {
 
     var pos_x = object_x.concat([xi, xi, 0, MOT_width]);
     var pos_y = object_y.concat([0, MOT_height, yi, yi]);
-    if (frame_index === 50)  console.log(pos_x, pos_y);
 
     for (var j = 0; j < pos_x.length; j++) {
       if (i == j) continue;
@@ -390,8 +388,8 @@ function animate_objects() {
       var d = Math.hypot(xj - xi, yj - yi) - repulsion_radius;
       var a = Math.atan2(yj - yi, xj - xi);
 
-      vx -= 10 / (d ** 2) * Math.cos(a);
-      vy -= 10 / (d ** 2) * Math.sin(a);
+      var ax = (j > object_x.length - 1 ? 10 : 1) * force_factor / (d ** 2) * Math.cos(a);
+      var ay = (j > object_x.length - 1 ? 10 : 1) * force_factor / (d ** 2) * Math.sin(a);
 
       object_v[i] = Math.hypot(vx, vy);
       object_angle[i] = Math.atan2(vy, vx);
@@ -399,6 +397,21 @@ function animate_objects() {
 
     object_x[i] += vx;
     object_y[i] += vy;
+
+    var sign = Math.random() > 0.5 ? 1 : -1;
+    var iter = 360;
+    while (iter > 0 &&
+          !check_constraints(object_x[i] + object_velocity*Math.cos(object_angle[i]),
+                             object_y[i] + object_velocity*Math.sin(object_angle[i]), i)
+    ) {
+      object_angle[i] += sign * Math.random() * Math.PI/180;
+      iter--;
+    }
+
+    if (iter > 0) {
+      object_x[i] += object_velocity*Math.cos(object_angle[i]);
+      object_y[i] += object_velocity*Math.sin(object_angle[i]);
+    }
   }
 
   init_object_positions(object_x.length);
