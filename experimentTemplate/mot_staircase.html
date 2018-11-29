@@ -130,7 +130,7 @@ var frame_index = 0;             // where are we in the animation?
 var num_fixation_frames = 5;     // for how many frames to show fixation cross
 var num_moving_frames = 100;      // how long should the tracking animation last
 var num_blink_frames = 15;       // how long the blinking animtion lasts
-var repulsion_radius = 30;       // object orbit
+var repulsion_radius = 35;       // object orbit
 
 var object_angle = [];           // object direction of movement
 var object_x = [];               // object coordinates
@@ -148,7 +148,7 @@ var force_factor = 1;
 var num_objects = 8;             // how many objects ?
 var num_targets = 4;             // how many of them are targets ?
 var object_velocity = 1;       // how far do the objects move per frame
-var velocity_step = 0.5;         // step used to calibrate object velocity
+var velocity_step = 0.2;         // step used to calibrate object velocity
 var frameTiming = 32;            // time im milliseconds between frames - set this variable to control the speed of animation
 var num_reversals = 0;           // the number of reversals that we need for staircasing
 var staircase_increasing = 1;     // we are currently in the increasing mode
@@ -322,8 +322,7 @@ function validateForm() {
 // ------------------------------------------------------------------------
 
 function distance(x1, y1, x2, y2) {
-  var dist = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
-  return Math.sqrt(dist);
+  return Math.hypot(x2 - x1, y2 - y1);
 }
 
 function check_constraints(x, y, idx) {
@@ -333,17 +332,14 @@ function check_constraints(x, y, idx) {
   for (var i = 0; i < object_x.length; i++) {
     if (idx == i) continue; // do not check distance from self, obviousely
 
-    if (distance(x, y, object_x[i], object_y[i]) < object_size/2 + repulsion_radius) {
+    if (distance(x, y, object_x[i], object_y[i]) < repulsion_radius)
       return false;
-    }
 
-    if (x < object_size/2 + repulsion_radius || y < object_size/2 + repulsion_radius) {
+    if (x < repulsion_radius || y < repulsion_radius)
       return false;
-    }
 
-    if (x + object_size/2 > MOT_width - repulsion_radius || y + object_size/2 > MOT_height - repulsion_radius) {
+    if (x + object_size/2 > MOT_width - repulsion_radius || y + object_size/2 > MOT_height - repulsion_radius)
       return false;
-    }
   }
 
   return true;
@@ -385,11 +381,11 @@ function animate_objects() {
       var xj = pos_x[j];
       var yj = pos_y[j];
 
-      var d = Math.hypot(xj - xi, yj - yi) - repulsion_radius;
+      var d = distance(xi, yi, xj, yj) - repulsion_radius / 2;
       var a = Math.atan2(yj - yi, xj - xi);
 
-      var ax = (j > object_x.length - 1 ? 10 : 1) * force_factor / (d ** 2) * Math.cos(a);
-      var ay = (j > object_x.length - 1 ? 10 : 1) * force_factor / (d ** 2) * Math.sin(a);
+      var ax = force_factor / (d ** 2) * Math.cos(a);
+      var ay = force_factor / (d ** 2) * Math.sin(a);
 
       object_v[i] = Math.hypot(vx, vy);
       object_angle[i] = Math.atan2(vy, vx);
@@ -401,16 +397,19 @@ function animate_objects() {
     var sign = Math.random() > 0.5 ? 1 : -1;
     var iter = 360;
     while (iter > 0 &&
-          !check_constraints(object_x[i] + object_velocity*Math.cos(object_angle[i]),
-                             object_y[i] + object_velocity*Math.sin(object_angle[i]), i)
+            !check_constraints(
+              object_x[i] + object_velocity * Math.cos(object_angle[i]),
+              object_y[i] + object_velocity * Math.sin(object_angle[i]),
+              i
+          )
     ) {
       object_angle[i] += sign * Math.random() * Math.PI/180;
       iter--;
     }
 
     if (iter > 0) {
-      object_x[i] += object_velocity*Math.cos(object_angle[i]);
-      object_y[i] += object_velocity*Math.sin(object_angle[i]);
+      object_x[i] += object_velocity * Math.cos(object_angle[i]);
+      object_y[i] += object_velocity * Math.sin(object_angle[i]);
     }
   }
 
