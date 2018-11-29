@@ -15,7 +15,7 @@ html, body {
   background: black;
 }
 
-#object1 { position: absolute; top: -400px; left: -500px; background-color: red}
+#object1 { position: absolute; top: -400px; left: -500px; }
 #object2 { position: absolute; top: -400px; left: -500px; }
 #object3 { position: absolute; top: -400px; left: -500px; }
 #object4 { position: absolute; top: -400px; left: -500px; }
@@ -127,9 +127,9 @@ html, body {
 // ---------------------------------------------------------------------------------------------------
 
 var frame_index = 0;             // where are we in the animation?
-var num_fixation_frames = 5;     // for how many frames to show fixation cross
-var num_moving_frames = 1000;      // how long should the tracking animation last
-var num_blink_frames = 15;       // how long the blinking animtion lasts
+var num_fixation_frames = 10;     // for how many frames to show fixation cross
+var num_moving_frames = 200;      // how long should the tracking animation last
+var num_blink_frames = 30;       // how long the blinking animtion lasts
 var repulsion_radius = 30;       // object orbit
 
 var object_angle = [];           // object direction of movement
@@ -142,6 +142,8 @@ var object_v_y = [];
 var object_a_x = [];             // object accelerations
 var object_a_y = [];
 var object_size = 25;
+var force_factor = 0.0001;
+var wall_multiplier = 10;
 
 // ---------------------------------------------------------------------------------------------------
 //
@@ -151,9 +153,9 @@ var object_size = 25;
 
 var num_objects = 8;             // how many objects ?
 var num_targets = 1;             // how many of them are targets ?
-var object_velocity = 2.2;       // how far do the objects move per frame
+var object_velocity = 1.1;       // how far do the objects move per frame
 var velocity_step = 0.5;         // step used to calibrate object velocity
-var frameTiming = 32;            // time im milliseconds between frames - set this variable to control the speed of animation
+var frameTiming = 16;            // time im milliseconds between frames - set this variable to control the speed of animation
 var num_reversals = 0;           // the number of reversals that we need for staircasing
 var staircase_increasing = 1;     // we are currently in the increasing mode
 
@@ -388,6 +390,8 @@ function reset_object_positions(num) {
 }
 
 function animate_objects() {
+  var MOT_width = document.getElementById("task_container").offsetWidth;
+  var MOT_height = document.getElementById("task_container").offsetHeight;
   /*
   for (var i = 0; i < object_x.length; i++) {
     // update position
@@ -413,28 +417,34 @@ function animate_objects() {
   }
   */
 
-  /*
+  
   for (var i = 0; i < object_x.length; i++) {
     // calculate distance to every other object
     for (var j = 0; j < object_x.length; j++) {
-      //var dist = distance(object_x[i], object_y[i], object_x[j], object_y[j]);
-      // update accelerations based on force (inversely prop to distance)
+      if (i == j) continue;
 
-      // for some reason inverse doesn't work help
-      //object_a_x[i] -= 100/(object_x[j] - object_x[i]);
-      //object_a_y[i] -= 100/(object_y[j] - object_y[i]);
-      object_a_x[i] -= object_x[j] - object_x[i];
-      object_a_y[i] -= object_y[j] - object_y[i];
+      var dist = distance(object_x[i], object_y[i], object_x[j], object_y[j]);
+      var angle = Math.atan2(object_y[j] - object_y[i], object_x[j] - object_x[i]);
+
+      // update accelerations based on force (inversely prop to distance)
+      object_a_x[i] -= force_factor/(dist*dist)*Math.cos(angle);
+      object_a_y[i] -= force_factor/(dist*dist)*Math.sin(angle);
     }
+
+    // force from walls
+    object_a_x[i] += wall_multiplier*force_factor/(object_x[i]-repulsion_radius)**2;  //left
+    object_a_x[i] -= wall_multiplier*force_factor/(MOT_width - object_x[i]-repulsion_radius)**2  //right
+    object_a_y[i] += wall_multiplier*force_factor/(object_y[i]-repulsion_radius)**2;  //top
+    object_a_y[i] -= wall_multiplier*force_factor/(MOT_height - object_y[i]-repulsion_radius)**2  //bottom
 
     // update velocity based on acceleration
     object_v_x[i] += object_a_x[i];
     object_v_y[i] += object_a_y[i];
 
     // normalize
-    var current_velocity = distance(object_v_x[i], object_v_y[i], 0, 0);
-    object_v_x[i] *= object_velocity/current_velocity;
-    object_v_y[i] *= object_velocity/current_velocity;
+    //var current_velocity = distance(object_v_x[i], object_v_y[i], 0, 0);
+    //object_v_x[i] *= object_velocity/current_velocity;
+    //object_v_y[i] *= object_velocity/current_velocity;
 
     // adjust angle if imminent collision
     object_angle[i] = Math.atan(object_v_y[i]/object_v_x[i])
@@ -446,15 +456,18 @@ function animate_objects() {
       iter--;
     }
 
-    // update new position
+    //update new position
     if (iter > 0) {
       object_x[i] += object_v_x[i];
       object_y[i] += object_v_y[i];
     }
+    // object_x[i] += object_v_x[i];
+    // object_y[i] += object_v_y[i];
 
   }
-  */
+  
 
+  /*
   //console.log(object_x, object_tx, object_y, object_ty)g
   for (var i = 0; i < object_x.length; i++) {
     var x = object_x[i];
@@ -498,6 +511,7 @@ function animate_objects() {
       object_ty[i] = Math.random()*(MOT_height - repulsion_radius*2 - object_size) + repulsion_radius + object_size/2;
     }
   }
+  */
 
   init_object_positions(object_x.length);
 }
@@ -516,7 +530,7 @@ function nextFrame() {
 
   } else if (frame_index < num_fixation_frames + num_blink_frames) {
     // draw blinking of the target objects
-    if (frame_index % 2 == 0) {
+    if (frame_index % 6 != 0) {
       reset_object_positions(num_targets);
     } else {
       init_object_positions(num_targets);
